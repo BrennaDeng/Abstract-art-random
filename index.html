@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Synth UI Exercise</title>
+  <script src="http://unpkg.com/tone"></script>
+
+  <!-- Import our CSS stylesheets -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Import our JS files -->
+  <!-- As these reference to DOM elements, we want to load them after it has loaded, so we use the defer property -->
+  <!-- https://developer.mozilla.org/en-US/docs/Web/API/HTMLScriptElement/defer -->
+  <!-- This first script has some functions for generic tasks -->
+  <script src="helperFunctions.js" defer></script>
+  <!-- This second script initialises the audio synthesizer system using tone -->
+  <script src="toneSetup.js" defer></script>
+  <!-- This third script handles sending notes from the keyboard controller to the synthesizer, again kept seperate
+       so that it can be modular -->
+  <script src="keyboardController.js" defer></script>
+  <!-- The last script handles connecting the UI to the synthesizer : this is where you'll be working -->
+  <script src="UIControls.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+  <style>
+    html, body {
+      margin: 0; padding: 0; height: 100%; overflow: hidden;
+      font-family: "Work Sans", sans-serif;
+      background: #95a593; 
+      color: #c1a2a2;
+    }
+
+    #sidebar {
+      position: fixed;
+      top: 0; right: 0;
+      width: 250px; height: 100%;
+      background: #1c1e21;
+      padding: 1rem;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+
+    #canvas-container {
+      position: absolute;
+      top:0; left:0;
+      width: calc(100% - 250px); height: 100%;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    .shape {
+      position: absolute;
+      width: 60px; height: 60px;
+      border-radius: 50%;
+      cursor: grab;
+      transition: transform 0.2s;
+    }
+
+    .shape[data-sound="synth1"] { background: #c6a6a3; }
+    .shape[data-sound="synth2"] { background: #a7caaf; }
+    .shape[data-sound="synth3"] { background: #a7c4d7; }
+
+    h2 { margin-top: 1rem; font-size: 1.1rem; }
+    p { font-size: 0.85rem; line-height: 1.2rem; }
+  </style>
+</head>
+
+
+<body>
+
+  <dialog id="introDialog">
+    <p>This synthesizer will make some noise, please check your system's volume setting.</p>
+    <button id="dialogCloseButton" autofocus>OK</button>
+  </dialog>
+
+    <!-- Intro Modal popup -->
+    <!-- Websites are subject to an autoplay policy, so need user interaction before making sound -->
+    <!-- In this case we use the interaction of closing the modal to trigger loading the synth -->
+    <!-- https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Autoplay -->    
+
+<div id="canvas-container">
+  <canvas id="stage"></canvas>
+  <!-- Shapes -->
+  <div class="shape" data-sound="synth1" style="top:60px;left:100px;"></div>
+  <div class="shape" data-sound="synth2" style="top:180px;left:300px;"></div>
+  <div class="shape" data-sound="synth3" style="top:300px;left:500px;"></div>
+</div>
+
+<aside id="sidebar">
+  <h2>Some notes</h2>
+  <p>▹This synthesizer will make some noise, please check your system's volume setting</p>
+  <p>▹Try clicking and dragging visible items</p><br>
+  <p>Why can't the dialog box be loaded:( </p>
+
+  <h2>Question</h2>
+  <p>Do you think it's interesting? Should I add more draggable buttons?</p>
+  <p>Do you find the sound feedback intuitive?</p>
+  <p>What do you think needs improvement?</p>
+  
+  <h2>Other</h2>
+  <p>The circle is a simple illustration, and I will later import some random shapes I made (I want to apply some abstract art style)</p>
+  <p>Any suggestions are welcome :D</p>
+</aside>
+
+<script>
+
+  let audioStarted = false;
+
+  const polySynth = new Tone.PolySynth(Tone.Synth, {
+    oscillator: { type: "fatsawtooth", count: 3, spread: 10 },
+    envelope: { attack: 0.01, decay: 0.1, sustain: 0.5, release: 0.1 }
+  }).toDestination();
+
+  const synths = {
+    synth1: new Tone.Synth({ oscillator: { type: "square" } }).toDestination(),
+    synth2: new Tone.FMSynth().toDestination(),
+    synth3: new Tone.AMSynth().toDestination(),
+  };
+
+  function startAudio() {
+    if (!audioStarted) {
+      Tone.start();
+      audioStarted = true;
+      console.log("Tone.js started");
+    }
+  }
+
+
+  const canvas = document.getElementById('stage');
+  const ctx = canvas.getContext('2d');
+  let blocks = [];
+
+  function resize() {
+    canvas.width = window.innerWidth - 200;
+    canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function randomNote() {
+    const notes = ["C4","D4","E4","F4","G4","A4","B4"];
+    return notes[Math.floor(Math.random() * notes.length)];
+  }
+
+  function randomColor() {
+    return `hsl(${Math.random()*360},70%,50%)`;
+  }
+
+  canvas.addEventListener('click', async e => {
+    startAudio();
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const size = 10;
+    blocks.push({x, y, size, color: randomColor()});
+    polySynth.triggerAttackRelease(randomNote(), "8n");
+  });
+
+  function loop() {
+    ctx.fillStyle = "rgba(34,34,34,0.2)";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    blocks.forEach((b,i)=>{
+      ctx.fillStyle = b.color;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.size, 0, Math.PI*2);
+      ctx.fill();
+      b.size += 1;
+      if(b.size>60) blocks.splice(i,1);
+    });
+    requestAnimationFrame(loop);
+  }
+  loop();
+
+
+  const shapes = document.querySelectorAll('.shape');
+
+  shapes.forEach(shape=>{
+    shape.addEventListener('mousedown', e=>{
+      startAudio();
+      e.preventDefault();
+      let offsetX = e.clientX - shape.offsetLeft;
+      let offsetY = e.clientY - shape.offsetTop;
+
+      function moveHandler(e){
+        shape.style.left = (e.clientX - offsetX) + "px";
+        shape.style.top = (e.clientY - offsetY) + "px";
+        checkCollision(shape);
+      }
+
+      function upHandler(){
+        document.removeEventListener('mousemove', moveHandler);
+        document.removeEventListener('mouseup', upHandler);
+      }
+
+      document.addEventListener('mousemove', moveHandler);
+      document.addEventListener('mouseup', upHandler);
+    });
+  });
+
+  function isOverlap(el1, el2){
+    const r1 = el1.getBoundingClientRect();
+    const r2 = el2.getBoundingClientRect();
+    return !(r2.left>r1.right || r2.right<r1.left || r2.top>r1.bottom || r2.bottom<r1.top);
+  }
+
+  function checkCollision(dragged){
+    shapes.forEach(other=>{
+      if(other!==dragged && isOverlap(dragged, other)){
+        
+        const a = dragged.dataset.sound;
+        const b = other.dataset.sound;
+              
+        const notes = {
+        synth1: "C4",
+        synth2: "E4",
+        synth3: "G4"
+      };
+
+        synths[a].triggerAttackRelease("C4", "8n");
+        synths[b].triggerAttackRelease("E4", "8n");
+        synths.synth3.triggerAttackRelease(notes.synth3, "8n");
+
+        dragged.style.backgroundColor = getRandomColor();
+        other.style.backgroundColor = getRandomColor();
+
+        other.style.transform = "scale(1.3)";
+        setTimeout(()=>{other.style.transform="scale(1)";},200);
+      }
+    });
+  }
+</script>
+</body>
+</html>
+

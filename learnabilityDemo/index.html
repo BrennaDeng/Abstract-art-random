@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+
+  <header>
+    <h1>Learnability Techniques</h1>
+  </header>
+
+  <section>
+    <h3>Tooltips</h3>
+    <p>While tooltips can be added in a simple manner, using the <span title="i'm a title tooltip"><em>title attribute</em></span>, for usability reasons we actually want something a little more robust.</p>
+    <div class="tooltipWrapper">
+      <button aria-describedby="phonetip">☎</button>
+      <div class="tooltip" id="phonetip">a phone not a pokeball</div>
+    </div>
+  </section>
+  
+  <section>
+    <h3>Modals</h3>
+    <p>We've looked at a modal for when our page loads, but they can also be useful for popups within the UI.</p>
+    <button id="infoModalButton">i</button>
+    <dialog id="infoDialog">
+      <p>This could store some longer instructions.</p>
+      <button id="infoDialogCloseButton" autofocus>OK</button>
+    </dialog>
+  </section>
+
+  <section>
+    <h3>Microcopy</h3>
+    <p>Even small things like suggested or default values can help users learn UI functionality.</p>
+    <input type="text" placeholder="myNewPreset">
+    <button>Save my preset</button>
+  </section>
+
+</body>
+</html>
