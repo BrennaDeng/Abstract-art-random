@@ -2,36 +2,30 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Synth UI Exercise</title>
+  <title>Abstract Art Random</title>
   <script src="http://unpkg.com/tone"></script>
 
-  <!-- Import our CSS stylesheets -->
   <link rel="stylesheet" href="style.css">
 
-  <!-- Import our JS files -->
-  <!-- As these reference to DOM elements, we want to load them after it has loaded, so we use the defer property -->
-  <!-- https://developer.mozilla.org/en-US/docs/Web/API/HTMLScriptElement/defer -->
-  <!-- This first script has some functions for generic tasks -->
   <script src="helperFunctions.js" defer></script>
-  <!-- This second script initialises the audio synthesizer system using tone -->
   <script src="toneSetup.js" defer></script>
-  <!-- This third script handles sending notes from the keyboard controller to the synthesizer, again kept seperate
-       so that it can be modular -->
   <script src="keyboardController.js" defer></script>
-  <!-- The last script handles connecting the UI to the synthesizer : this is where you'll be working -->
   <script src="UIControls.js" defer></script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>  <!-- 👈 添加这行 -->
 
   <style>
     html, body {
       margin: 0; padding: 0; height: 100%; overflow: hidden;
       font-family: "Work Sans", sans-serif;
-      background: #95a593; 
+      background: #2a2d34; 
       color: #c1a2a2;
+      transition: background-color 0.3s ease;
     }
 
-    #sidebar {
+    /*#sidebar {
       position: fixed;
       top: 0; right: 0;
       width: 250px; height: 100%;
@@ -39,35 +33,22 @@
       padding: 1rem;
       box-sizing: border-box;
       overflow-y: auto;
+    }*/
+
+
+    h2 { 
+      margin-top: 1rem; 
+      font-size: 1.1rem; 
+    }
+    
+    p { 
+      font-size: 0.85rem; 
+      line-height: 1.2rem; 
     }
 
-    #canvas-container {
-      position: absolute;
-      top:0; left:0;
-      width: calc(100% - 250px); height: 100%;
-    }
-
-    canvas {
-      display: block;
-    }
-
-    .shape {
-      position: absolute;
-      width: 60px; height: 60px;
-      border-radius: 50%;
-      cursor: grab;
-      transition: transform 0.2s;
-    }
-
-    .shape[data-sound="synth1"] { background: #c6a6a3; }
-    .shape[data-sound="synth2"] { background: #a7caaf; }
-    .shape[data-sound="synth3"] { background: #a7c4d7; }
-
-    h2 { margin-top: 1rem; font-size: 1.1rem; }
-    p { font-size: 0.85rem; line-height: 1.2rem; }
   </style>
+  <link rel="icon" type="image/png" href="./favicon.png">
 </head>
-
 
 <body>
 
@@ -76,24 +57,134 @@
     <button id="dialogCloseButton" autofocus>OK</button>
   </dialog>
 
-    <!-- Intro Modal popup -->
-    <!-- Websites are subject to an autoplay policy, so need user interaction before making sound -->
-    <!-- In this case we use the interaction of closing the modal to trigger loading the synth -->
-    <!-- https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Autoplay -->    
+  <!-- guide idk -->
+  <dialog id="guideDialog">
+    <div class="guide-content">
+      <h2><img src="assets/Control icon/panel_icon_mute.png" alt="Mute" class="mute-icon"> <font size = 3px>Welcome to</font> <br>RAMDOM ABSTRACT ART</h2>
+      <div class="guide-section">
+        <h3>◈ How to Use:</h3>
+        <ul>
+          <li><strong>Click anywhere</strong> on the canvas to generate random graphics with sound</li>
+          <li><strong>Drag the 5 fixed graphics</strong> to move them around, Collide two fixed graphics to create harmonies</li>
+          <li><strong>You can try to make an abstract painting with these random graphics</strong> (You can undo last graphic~)</li>
+          <li><strong>Higher position</strong> = Higher pitch</li>
+        </ul>
+      </div>
+      <div class="guide-tips">
+        <p>◈ Tip: Use the control panel on the right to adjust settings</p>
+      </div>
+      <button id="guideCloseButton" autofocus>Let's Start!</button>
+      <label class="dont-show">
+        <input type="checkbox" id="dontShowAgain"> Don't show this again
+      </label>
+    </div>
+  </dialog>
 
 <div id="canvas-container">
   <canvas id="stage"></canvas>
   <!-- Shapes -->
-  <div class="shape" data-sound="synth1" style="top:60px;left:100px;"></div>
-  <div class="shape" data-sound="synth2" style="top:180px;left:300px;"></div>
-  <div class="shape" data-sound="synth3" style="top:300px;left:500px;"></div>
+  <div class="shape" data-sound="synth1" style="top:60px;left:100px;">
+    <img src="assets/fixed graphics/fixed_graphic_1.png" alt="Shape 1">
+  </div>
+  <div class="shape" data-sound="synth2" style="top:180px;left:300px;">
+    <img src="assets/fixed graphics/fixed_graphic_2.png" alt="Shape 2">
+  </div>
+  <div class="shape" data-sound="synth3" style="top:300px;left:500px;">
+    <img src="assets/fixed graphics/fixed_graphic_3.png" alt="Shape 3">
+  </div>
+  <div class="shape" data-sound="synth4" style="top:100px;left:800px;">
+    <img src="assets/fixed graphics/fixed_graphic_4.png" alt="Shape 4">
+  </div>
+  <div class="shape" data-sound="synth5" style="top:220px;left:1000px;">
+    <img src="assets/fixed graphics/fixed_graphic_5.png" alt="Shape 5">
+  </div>
 </div>
 
-<aside id="sidebar">
+<!--<div id="control-panel">
+  <h3><img src="assets/Control icon/panel_icon_maincontrl.png" alt="Control" class="panel-icon"> Control Panel</h3>-->
+  
+  <div id="control-panel" class="expanded">
+  <button id="panel-toggle" onclick="togglePanel()">
+    <span class="toggle-icon">◀</span>
+  </button>
+  <div class="panel-content">
+    <h3><img src="assets/Control icon/panel_icon_maincontrl.png" alt="Control" class="panel-icon"> Control Panel</h3>
+    
+ <!-- Statistics -->
+  <div class="control-group">
+    <div class="stats">
+      <span>Generated: <strong id="graphic-count">0</strong></span>
+      <span>Audio: <strong id="audio-status">Open</strong></span>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <button class="control-btn" onclick="undoLastGraphic()">↶ Undo previous</button>
+    <button class="control-btn danger" onclick="clearAllGraphics()"><img src="assets/Control icon/panel_icon_clear.png" alt="clearAllGraphics" class="clear-icon"> Clear All</button>
+  </div>
+
+  <!-- mute -->
+  <div class="control-group">
+    <label><img src="assets/Control icon/panel_icon_mute.png" alt="Mute" class="mute-icon">  Audio Control</label>
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <span style="font-size: 0.8rem;">Mute</span>
+      <div class="toggle-switch" id="audio-toggle" onclick="toggleAudio()"></div>
+    </div>
+  </div>
+
+  <!-- range size -->
+  <div class="control-group">
+    <label><img src="assets/Control icon/panel_icon_randomsizecontrol.png" alt="sizerange" class="size-range-icon"> Random Graphic size range</label>
+    <input type="range" class="control-slider" id="size-range" 
+           min="80" max="400" value="200" oninput="updateSizeRange(this.value)">
+    <div class="info-text">Current: <span id="size-value">80-160</span>px</div>
+  </div>
+
+  <!--<div class="control-group">
+    <label>Background diffusion circles</label>
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <span style="font-size: 0.8rem;">close</span>
+      <div class="toggle-switch active" id="animation-toggle" onclick="toggleAnimation()"></div>
+    </div>
+  </div>-->
+
+  <!-- bg color-->
+  <div class="control-group">
+    <label><img src="assets/Control icon/panel_icon_randomsizecontrol.png" alt="sizerange" class="size-range-icon">  Background Color</label>
+    <div style="display: flex; gap: 0.5rem; align-items: center;">
+      <input type="color" id="bg-color-picker" value="#2a2d34" 
+             style="width: 50px; height: 30px; border: none; border-radius: 5px; cursor: pointer;">
+      <button class="control-btn" style="flex: 1; margin: 0;" onclick="randomBackgroundColor()">
+        Random
+      </button>
+    </div>
+    <div style="display: flex; gap: 0.3rem; margin-top: 0.5rem; flex-wrap: wrap;">
+      <button class="preset-color" style="background: #2a2d34;" onclick="setBackgroundColor('#2a2d34')" title="Default"></button>
+      <button class="preset-color" style="background: #7a8c8d;" onclick="setBackgroundColor('#7a8c8d')" title="Dark Teal"></button>
+      <button class="preset-color" style="background: #d1c4b3;" onclick="setBackgroundColor('#c4b7a6')" title="Beige"></button>
+      <button class="preset-color" style="background: #a39ba8;" onclick="setBackgroundColor('#a39ba8')" title="Lavender"></button>
+      <button class="preset-color" style="background: #8d9ea3;" onclick="setBackgroundColor('#8d9ea3')" title="Steel Blue"></button>
+      <button class="preset-color" style="background: #916659;" onclick="setBackgroundColor('#916659')" title="Dark Red"></button>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <button class="control-btn" onclick="saveCanvas()"><img src="assets/Control icon/panel_icon_save.png" alt="save" class="save-icon"> Save screen</button>
+    <button class="control-btn" onclick="randomizeShapes()"><img src="assets/Control icon/panel_icon_rearrange.png" alt="rearrange" class="rearrange-icon"> Rearrange fixed shapes</button>
+  </div>
+</div>
+    
+    
+  </div> 
+</div>
+
+ 
+
+<!-- <aside id="sidebar">
   <h2>Some notes</h2>
   <p>▹This synthesizer will make some noise, please check your system's volume setting</p>
-  <p>▹Try clicking and dragging visible items</p><br>
-  <p>Why can't the dialog box be loaded:( </p>
+  <p>▹Try clicking and dragging visible items</p>
+  <p>▹Click on canvas to create random graphics!</p>
 
   <h2>Question</h2>
   <p>Do you think it's interesting? Should I add more draggable buttons?</p>
@@ -103,10 +194,38 @@
   <h2>Other</h2>
   <p>The circle is a simple illustration, and I will later import some random shapes I made (I want to apply some abstract art style)</p>
   <p>Any suggestions are welcome :D</p>
-</aside>
+</aside> -->
 
 <script>
-
+  const hasSeenGuide = localStorage.getItem('hasSeenGuide');
+  
+  const introModal = document.getElementById("introDialog");
+  const guideModal = document.getElementById("guideDialog");
+  
+  introModal.showModal();
+  
+  document.getElementById("dialogCloseButton").addEventListener("click", () => {
+    introModal.close();
+    
+    if (!hasSeenGuide) {
+      setTimeout(() => {
+        guideModal.showModal();
+      }, 300); 
+    }
+  });
+  
+  // close guide
+  document.getElementById("guideCloseButton").addEventListener("click", () => {
+    const dontShow = document.getElementById("dontShowAgain").checked;
+    
+    if (dontShow) {
+      localStorage.setItem('hasSeenGuide', 'true');
+    }
+    
+    guideModal.close();
+  });
+  
+  
   let audioStarted = false;
 
   const polySynth = new Tone.PolySynth(Tone.Synth, {
@@ -118,6 +237,8 @@
     synth1: new Tone.Synth({ oscillator: { type: "square" } }).toDestination(),
     synth2: new Tone.FMSynth().toDestination(),
     synth3: new Tone.AMSynth().toDestination(),
+    synth4: new Tone.Synth({ oscillator: { type: "sine" } }).toDestination(),
+    synth5: new Tone.Synth({ oscillator: { type: "triangle" } }).toDestination()
   };
 
   function startAudio() {
@@ -128,13 +249,12 @@
     }
   }
 
-
   const canvas = document.getElementById('stage');
   const ctx = canvas.getContext('2d');
   let blocks = [];
 
   function resize() {
-    canvas.width = window.innerWidth - 200;
+    canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
   }
   window.addEventListener('resize', resize);
@@ -142,11 +262,136 @@
 
   function randomNote() {
     const notes = ["C4","D4","E4","F4","G4","A4","B4"];
-    return notes[Math.floor(Math.random() * notes.length)];
+     notes[Math.floor(Math.random() * notes.length)];
   }
 
   function randomColor() {
     return `hsl(${Math.random()*360},70%,50%)`;
+  }
+
+  // random graphic
+  const randomGraphics = [
+    "assets/Random Graphics/random_graphic_blue_1.png",
+    "assets/Random Graphics/random_graphic_blue_2.png",
+    "assets/Random Graphics/random_graphic_blue_3.png",
+    "assets/Random Graphics/random_graphic_blue_4.png",
+    "assets/Random Graphics/random_graphic_blue_5.png",
+    "assets/Random Graphics/random_graphic_blue_6.png",
+    "assets/Random Graphics/random_graphic_blue_7.png",
+    "assets/Random Graphics/random_graphic_blue_8.png",
+    "assets/Random Graphics/random_graphic_blue_9.png",
+    "assets/Random Graphics/random_graphic_blue_10.png",
+    "assets/Random Graphics/random_graphic_blue_11.png",
+    "assets/Random Graphics/random_graphic_blue_12.png",
+    "assets/Random Graphics/random_graphic_blue_13.png",
+    "assets/Random Graphics/random_graphic_blue_14.png",
+    "assets/Random Graphics/random_graphic_blue_15.png",
+    "assets/Random Graphics/random_graphic_blue_16.png",
+    "assets/Random Graphics/random_graphic_blue_17.png",
+    "assets/Random Graphics/random_graphic_blue_18.png",
+    "assets/Random Graphics/random_graphic_blue_19.png",
+    "assets/Random Graphics/random_graphic_blue_20.png",
+    "assets/Random Graphics/random_graphic_darkblue_1.png",
+    "assets/Random Graphics/random_graphic_darkblue_2.png",
+    "assets/Random Graphics/random_graphic_darkblue_3.png",
+    "assets/Random Graphics/random_graphic_darkblue_4.png",
+    "assets/Random Graphics/random_graphic_darkblue_5.png",
+    "assets/Random Graphics/random_graphic_darkblue_6.png",
+    "assets/Random Graphics/random_graphic_darkblue_7.png",
+    "assets/Random Graphics/random_graphic_darkblue_8.png",
+    "assets/Random Graphics/random_graphic_darkblue_9.png",
+    "assets/Random Graphics/random_graphic_darkblue_10.png",
+    "assets/Random Graphics/random_graphic_darkblue_11.png",
+    "assets/Random Graphics/random_graphic_darkblue_12.png",
+    "assets/Random Graphics/random_graphic_darkblue_13.png",
+    "assets/Random Graphics/random_graphic_darkblue_14.png",
+    "assets/Random Graphics/random_graphic_darkblue_15.png",
+    "assets/Random Graphics/random_graphic_darkblue_16.png",
+    "assets/Random Graphics/random_graphic_darkblue_17.png",
+    "assets/Random Graphics/random_graphic_darkblue_18.png",
+    "assets/Random Graphics/random_graphic_darkblue_19.png",
+    "assets/Random Graphics/random_graphic_darkblue_20.png",
+    "assets/Random Graphics/random_graphic_grey_1.png",
+    "assets/Random Graphics/random_graphic_grey_2.png",
+    "assets/Random Graphics/random_graphic_grey_3.png",
+    "assets/Random Graphics/random_graphic_grey_4.png",
+    "assets/Random Graphics/random_graphic_grey_5.png",
+    "assets/Random Graphics/random_graphic_grey_6.png",
+    "assets/Random Graphics/random_graphic_grey_7.png",
+    "assets/Random Graphics/random_graphic_grey_8.png",
+    "assets/Random Graphics/random_graphic_grey_9.png",
+    "assets/Random Graphics/random_graphic_grey_10.png",
+    "assets/Random Graphics/random_graphic_grey_11.png",
+    "assets/Random Graphics/random_graphic_grey_12.png",
+    "assets/Random Graphics/random_graphic_grey_13.png",
+    "assets/Random Graphics/random_graphic_grey_14.png",
+    "assets/Random Graphics/random_graphic_grey_15.png",
+    "assets/Random Graphics/random_graphic_grey_16.png",
+    "assets/Random Graphics/random_graphic_grey_17.png",
+    "assets/Random Graphics/random_graphic_grey_18.png",
+    "assets/Random Graphics/random_graphic_grey_19.png",
+    "assets/Random Graphics/random_graphic_grey_20.png",
+    "assets/Random Graphics/random_graphic_red_1.png",
+    "assets/Random Graphics/random_graphic_red_2.png",
+    "assets/Random Graphics/random_graphic_red_3.png",
+    "assets/Random Graphics/random_graphic_red_4.png",
+    "assets/Random Graphics/random_graphic_red_5.png",
+    "assets/Random Graphics/random_graphic_red_6.png",
+    "assets/Random Graphics/random_graphic_red_7.png",
+    "assets/Random Graphics/random_graphic_red_8.png",
+    "assets/Random Graphics/random_graphic_red_9.png",
+    "assets/Random Graphics/random_graphic_red_10.png",
+    "assets/Random Graphics/random_graphic_red_11.png",
+    "assets/Random Graphics/random_graphic_red_12.png",
+    "assets/Random Graphics/random_graphic_red_13.png",
+    "assets/Random Graphics/random_graphic_red_14.png",
+    "assets/Random Graphics/random_graphic_red_15.png",
+    "assets/Random Graphics/random_graphic_red_16.png",
+    "assets/Random Graphics/random_graphic_red_17.png",
+    "assets/Random Graphics/random_graphic_red_18.png",
+    "assets/Random Graphics/random_graphic_red_19.png",
+    "assets/Random Graphics/random_graphic_red_20.png",
+    "assets/Random Graphics/random_graphic_white_1.png",
+    "assets/Random Graphics/random_graphic_white_2.png",
+    "assets/Random Graphics/random_graphic_white_3.png",
+    "assets/Random Graphics/random_graphic_white_4.png",
+    "assets/Random Graphics/random_graphic_white_5.png",
+    "assets/Random Graphics/random_graphic_white_6.png",
+    "assets/Random Graphics/random_graphic_white_7.png",
+    "assets/Random Graphics/random_graphic_white_8.png",
+    "assets/Random Graphics/random_graphic_white_9.png",
+    "assets/Random Graphics/random_graphic_white_10.png",
+    "assets/Random Graphics/random_graphic_white_11.png",
+    "assets/Random Graphics/random_graphic_white_12.png",
+    "assets/Random Graphics/random_graphic_white_13.png",
+    "assets/Random Graphics/random_graphic_white_14.png",
+    "assets/Random Graphics/random_graphic_white_15.png",
+    "assets/Random Graphics/random_graphic_white_16.png",
+    "assets/Random Graphics/random_graphic_white_17.png",
+    "assets/Random Graphics/random_graphic_white_18.png",
+    "assets/Random Graphics/random_graphic_white_19.png",
+    "assets/Random Graphics/random_graphic_white_20.png",
+  ];
+
+  let clickedGraphics = []; 
+
+
+
+// ========== random ==========
+  
+  // top to botton
+  const pitchScale = [
+    "C3", "D3", "E3", "F3", "G3", "A3", "B3",  
+    "C4", "D4", "E4", "F4", "G4", "A4", "B4",  
+    "C5", "D5", "E5", "F5", "G5", "A5", "B5"   
+  ];
+
+  // Coordinate Y
+  function getNoteFromPosition(y) {
+    const canvasHeight = canvas.height;
+    const normalizedY = 1 - (y / canvasHeight);
+    const noteIndex = Math.floor(normalizedY * (pitchScale.length - 1));
+    return pitchScale[Math.max(0, Math.min(noteIndex, pitchScale.length - 1))];
   }
 
   canvas.addEventListener('click', async e => {
@@ -154,14 +399,43 @@
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    const size = 10;
-    blocks.push({x, y, size, color: randomColor()});
-    polySynth.triggerAttackRelease(randomNote(), "8n");
+    
+    // random
+    const randomImg = randomGraphics[Math.floor(Math.random() * randomGraphics.length)];
+    
+    // range size
+    const randomSize = minSize + Math.random() * (maxSize - minSize);
+    const randomRotation = Math.random() * 360;
+    
+    // Create a new graphic element
+    const newGraphic = document.createElement('div');
+    newGraphic.className = 'clicked-graphic';
+    newGraphic.style.left = (x - randomSize/2) + 'px';
+    newGraphic.style.top = (y - randomSize/2) + 'px';
+    newGraphic.style.width = randomSize + 'px';
+    newGraphic.style.height = randomSize + 'px';
+    newGraphic.style.setProperty('--final-rotation', `${randomRotation}deg`);
+    newGraphic.style.transform = `rotate(${randomRotation}deg)`;
+    
+    const img = document.createElement('img');
+    img.src = randomImg;
+    newGraphic.appendChild(img);
+    
+    document.getElementById('canvas-container').appendChild(newGraphic);
+    clickedGraphics.push(newGraphic);
+    updateGraphicCount();
+    
+    ///  Play the note determined by position no mute
+    if (!isMuted) {
+      const note = getNoteFromPosition(y);
+      polySynth.triggerAttackRelease(note, "8n");
+      console.log(`Played note: ${note} at Y: ${y}`); 
+    }
   });
 
   function loop() {
-    ctx.fillStyle = "rgba(34,34,34,0.2)";
-    ctx.fillRect(0,0,canvas.width,canvas.height);
+    //ctx.fillStyle = "rgba(34,34,34,0.2)";
+    //ctx.fillRect(0,0,canvas.width,canvas.height);
 
     blocks.forEach((b,i)=>{
       ctx.fillStyle = b.color;
@@ -174,7 +448,6 @@
     requestAnimationFrame(loop);
   }
   loop();
-
 
   const shapes = document.querySelectorAll('.shape');
 
@@ -207,6 +480,7 @@
     return !(r2.left>r1.right || r2.right<r1.left || r2.top>r1.bottom || r2.bottom<r1.top);
   }
 
+
   function checkCollision(dragged){
     shapes.forEach(other=>{
       if(other!==dragged && isOverlap(dragged, other)){
@@ -215,22 +489,242 @@
         const b = other.dataset.sound;
               
         const notes = {
-        synth1: "C4",
-        synth2: "E4",
-        synth3: "G4"
-      };
+          synth1: "C4",
+          synth2: "D4",
+          synth3: "E4",
+          synth4: "G4",
+          synth5: "A4"
+        };
 
-        synths[a].triggerAttackRelease("C4", "8n");
-        synths[b].triggerAttackRelease("E4", "8n");
-        synths.synth3.triggerAttackRelease(notes.synth3, "8n");
-
-        dragged.style.backgroundColor = getRandomColor();
-        other.style.backgroundColor = getRandomColor();
+        synths[a].triggerAttackRelease(notes[a], "8n");
+        synths[b].triggerAttackRelease(notes[b], "8n");
 
         other.style.transform = "scale(1.3)";
         setTimeout(()=>{other.style.transform="scale(1)";},200);
       }
     });
+  }
+
+  // ========== Control panel features ==========
+  
+  let isMuted = false;
+  let showBackgroundAnimation = true;
+  let minSize = 80;
+  let maxSize = 400;
+
+  // Update graph count
+  function updateGraphicCount() {
+    document.getElementById('graphic-count').textContent = clickedGraphics.length;
+  }
+
+  // Undo the last drawing
+  function undoLastGraphic() {
+    if (clickedGraphics.length > 0) {
+      const lastGraphic = clickedGraphics.pop();
+      lastGraphic.remove();
+      updateGraphicCount();
+    } else {
+      alert('There are no UNDO graphics!');
+    }
+  }
+
+  // clear all
+  function clearAllGraphics() {
+    if (clickedGraphics.length === 0) {
+      alert('The screen is already empty!');
+      return;
+    }
+    
+    if (confirm(`Are you sure you want to clear all ${clickedGraphics.length} graphics？`)) {
+      clickedGraphics.forEach(graphic => graphic.remove());
+      clickedGraphics = [];
+      updateGraphicCount();
+    }
+  }
+
+  // change mute
+  function toggleAudio() {
+    const toggle = document.getElementById('audio-toggle');
+    const status = document.getElementById('audio-status');
+    isMuted = !isMuted;
+    
+    toggle.classList.toggle('active');
+    status.textContent = isMuted ? 'Mute' : 'Open';
+    
+    // Adjust the volume no
+    Tone.getDestination().volume.value = isMuted ? -Infinity : 0;
+  }
+
+  // range size
+  function updateSizeRange(value) {
+    maxSize = parseInt(value);
+    minSize = Math.max(80, maxSize - 80); // 
+    document.getElementById('size-value').textContent = `${minSize}-${maxSize}`;
+  }
+
+
+
+  // save
+async function saveCanvas() {
+  const panel = document.getElementById('control-panel');
+
+  try {
+    panel.style.display = 'none';
+    console.log('Start taking screenshots...');
+
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    const capturedCanvas = await html2canvas(document.body, {
+      backgroundColor: null,     
+      scale: 2,                  
+      logging: false,
+      useCORS: true,            
+      allowTaint: false,         
+      imageTimeout: 0,         
+      removeContainer: true,
+      proxy: null               
+    });
+
+    console.log('Screenshot completed, start converting...');
+
+    const now = new Date();
+    const timestamp =
+      now.getFullYear() +
+      String(now.getMonth() + 1).padStart(2, '0') +
+      String(now.getDate()).padStart(2, '0') + '-' +
+      String(now.getHours()).padStart(2, '0') +
+      String(now.getMinutes()).padStart(2, '0') +
+      String(now.getSeconds()).padStart(2, '0');
+
+    const filename = `abstract-art-${timestamp}.png`;
+
+    try {
+      const dataURL = capturedCanvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = dataURL;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      console.log('Download Complete:', filename);
+      alert('Image saved！\n\nfile name: ' + filename + '\nPlease check in your download folder.');
+    } catch (e) {
+
+      console.error('toDataURL Failure, attempt toBlob:', e);
+
+      capturedCanvas.toBlob(blob => {
+        if (!blob) {
+          throw new Error('Unable to generate image');
+        }
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 100);
+
+        console.log('Download Complete:', filename);
+        alert('Image saved！\n\nfile name: ' + filename + '\nPlease check in your download folder.');
+      }, 'image/png');
+    }
+
+  } catch (error) {
+    console.error('Save failed!:', error);
+    alert('!!!Save failed!\n\nERROR: ' + error.message + '\n\nTry:\nUse system screenshots (Win+Shift+S or Cmd+Shift+4)');
+  } finally {
+    
+    panel.style.display = '';
+    console.log('Control Panel Restored');
+  }
+}
+
+    
+    // how to save
+    // alert('idk, shift + win + S(temporary)');
+    
+    /*
+    tempCanvas.toBlob(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `synth-art-${Date.now()}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+    */
+  
+
+  // Shuffle draggable shapes
+  function randomizeShapes() {
+    const shapes = document.querySelectorAll('.shape');
+    const containerWidth = window.innerWidth- 100; 
+    const containerHeight = window.innerHeight - 100;
+    
+    shapes.forEach(shape => {
+      const newX = Math.random() * containerWidth;
+      const newY = Math.random() * containerHeight;
+      shape.style.transition = 'all 0.5s ease';
+      shape.style.left = newX + 'px';
+      shape.style.top = newY + 'px';
+    });
+    
+    setTimeout(() => {
+      shapes.forEach(shape => {
+        shape.style.transition = 'transform 0.2s';
+      });
+    }, 500);
+  }
+
+  // ========== bg color ==========
+  
+  function setBackgroundColor(color) {
+    document.body.style.backgroundColor = color;
+    document.getElementById('bg-color-picker').value = color;
+    console.log(color);
+
+  }
+
+  // random bg color
+  function randomBackgroundColor() {
+    const hue = Math.random() * 360;
+    const saturation = 20 + Math.random() * 30; 
+    const lightness = 50 + Math.random() * 20;  
+    const color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+    
+    document.body.style.backgroundColor = color;
+    
+    const tempDiv = document.createElement('div');
+    tempDiv.style.color = color;
+    document.body.appendChild(tempDiv);
+    const computedColor = window.getComputedStyle(tempDiv).color;
+    document.body.removeChild(tempDiv);
+    
+    const rgb = computedColor.match(/\d+/g);
+    const hex = '#' + rgb.map(x => {
+      const hex = parseInt(x).toString(16);
+      return hex.length === 1 ? '0' + hex : hex;
+    }).join('');
+    
+    document.getElementById('bg-color-picker').value = hex;
+  }
+
+  // freedom color
+  document.getElementById('bg-color-picker').addEventListener('input', (e) => {
+    document.body.style.background = e.target.value;
+  });
+
+  // ========== Control panel collapse/expand ==========
+  function togglePanel() {
+    const panel = document.getElementById('control-panel');
+    panel.classList.toggle('collapsed');
+    panel.classList.toggle('expanded');
   }
 </script>
 </body>

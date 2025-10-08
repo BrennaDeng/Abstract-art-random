@@ -20,6 +20,8 @@ let polySynth = new Tone.PolySynth(Tone.Synth, {
 const synth1 = new Tone.Synth();
 const synth2 = new Tone.Synth();
 const synth3 = new Tone.Synth();
+const synth4 = new Tone.Synth();
+const synth5 = new Tone.Synth();
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////// Sampler
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -60,6 +62,8 @@ function toneInit() {
     synth1.chain(filter, distortion, reverb, Tone.Destination);
     synth2.chain(filter, distortion, reverb, Tone.Destination);
     synth3.chain(filter, distortion, reverb, Tone.Destination);
+    synth4.chain(filter, distortion, reverb, Tone.Destination);
+    synth5.chain(filter, distortion, reverb, Tone.Destination);
 
     console.log("Tone.js initialized");
 }
@@ -69,7 +73,7 @@ function playNote(synth, note="C4", duration="8n") {
     synth.triggerAttackRelease(note, duration);
 }
 
-function playChord(notes=["C4","E4","G4"], duration="8n") {
+function playChord(notes=["C4","E4","G4","A4","C5"], duration="8n") {
     polySynth.triggerAttackRelease(notes, duration);
 }
 
