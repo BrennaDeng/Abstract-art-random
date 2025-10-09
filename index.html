@@ -608,7 +608,7 @@ async function saveCanvas() {
       document.body.removeChild(a);
 
       console.log('Download Complete:', filename);
-      alert('Image saved！\n\nfile name: ' + filename + '\nPlease check in your download folder.');
+      alert('Image saved！\n\nfile name: ' + filename + '\nPlease check in your download folder.\n\nSometimes the graphics rotation renderer no work, you can try save it again~');
     } catch (e) {
 
       console.error('toDataURL Failure, attempt toBlob:', e);
