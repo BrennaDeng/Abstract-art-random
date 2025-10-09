@@ -608,7 +608,7 @@ async function saveCanvas() {
       document.body.removeChild(a);
 
       console.log('Download Complete:', filename);
-      alert('Image saved！\n\nfile name: ' + filename + '\nPlease check in your download folder.\n\nSometimes the graphics rotation renderer no work, you can try save it again~(Sometimes non-rotating graphics are also no bad~(￣▽￣)~*');
+      alert('Image saved！OwO\n\nfile name: ' + filename + '\nPlease check in your download folder.\n\nSometimes the graphics rotation renderer no work, you can try save it again~(Sometimes non-rotating graphics are also no bad~(￣▽￣)~*');
     } catch (e) {
 
       console.error('toDataURL Failure, attempt toBlob:', e);
@@ -631,13 +631,13 @@ async function saveCanvas() {
         }, 100);
 
         console.log('Download Complete:', filename);
-        alert('Image saved！\n\nfile name: ' + filename + '\nPlease check in your download folder.');
+        alert('Image saved！OwO\n\nfile name: ' + filename + '\nPlease check in your download folder.\n\nSometimes the graphics rotation renderer no work, you can try save it again~(Sometimes non-rotating graphics are also no bad~(￣▽￣)~*');
       }, 'image/png');
     }
 
   } catch (error) {
     console.error('Save failed!:', error);
-    alert('!!!Save failed!\n\nERROR: ' + error.message + '\n\nTry:\nUse system screenshots (Win+Shift+S or Cmd+Shift+4)');
+    alert('!!!Save failed!w(ﾟДﾟ)w\n\nERROR: ' + error.message + '\n\nTry:\nUse system screenshots (Win+Shift+S or Cmd+Shift+4)');
   } finally {
     
     panel.style.display = '';
