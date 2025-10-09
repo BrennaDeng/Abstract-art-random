@@ -146,6 +146,8 @@ canvas {
       pointer-events: none;
       z-index: 5;
       animation: smoothRotate 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); 
+      will-change: transform, opacity; 
+      transform: translateZ(0); 
     }
 
 @keyframes fadeIn {
@@ -162,7 +164,7 @@ canvas {
     @keyframes smoothRotate {
       from {
         opacity: 0;
-        transform: scale(0.3) rotate(-180deg);  
+        transform: scale(0.3) rotate(-180deg) translateZ(0);
       }
       50% {
         opacity: 1;
